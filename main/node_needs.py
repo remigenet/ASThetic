@@ -3,6 +3,7 @@ Rémi Genet
 17/10/2023
 """
 import ast
+import builtins
 from itertools import chain
 from typing import Set, Optional, Callable, Iterable, Tuple, Union, List
 from ast import (
@@ -17,16 +18,27 @@ from ast import (
     TryStar, match_case, MatchOr, MatchAs, MatchStar, MatchValue, MatchMapping, MatchSingleton,
     MatchSequence, MatchClass,
 )
+
 from interface import interface_import
+
+
+future_node_adds: Callable[[Optional[AST],bool], Set[str]]
+TimeNodeCost: Callable[[AST,Set[str]],Set[str]]
+apply: Callable[[Callable[[Optional[AST], bool], Set[str]], Optional[Iterable[Optional[AST]]], bool], Set[str]]
 prune_node: Callable[[AST],AST]
 implied_globals_needs: Callable[[List[Set[str]], List[Set[str]], List[bool]],Tuple[Set[str], Set[str], Set[str]]]
 implied_previous_needs: Callable[[List[Set[str]], List[Set[str]], List[bool]], Tuple[List[Set[str]], List[Set[str]], List[Set[str]]]]
 
-future_node_adds: Callable[[Optional[AST],bool], Set[str]] = interface_import("node_adds", fromlist=('future_node_adds',), level=0)[0]
-TimeNodeCost: Callable[[AST,Set[str]],Set[str]] = interface_import("node_selection", fromlist=('TimeNodeCost',), level=0)[0]
-apply: Callable[[Callable[[Optional[AST], bool],Set[str]],Optional[Iterable[Optional[AST]]],bool],Set[str]] = interface_import("helpers", fromlist=('apply',), level=0)[0]
+future_node_adds, = interface_import("node_adds", fromlist=('future_node_adds',), level=0)
+TimeNodeCost, = interface_import("node_selection", fromlist=('TimeNodeCost',), level=0)
+apply, = interface_import("helpers", fromlist=('apply',), level=0)
 prune_node, implied_globals_needs, implied_previous_needs = interface_import("node_selection", fromlist=('prune_node', 'implied_globals_needs', 'implied_previous_needs',), level=0)
 
+# from typing import TypeVar, Any
+# F = TypeVar('F', bound=Callable[..., Any])
+# count = 0
+#
+# InnOut, = interface_import("helpers", fromlist=('InnOut',), level=0)
 
 def all_node_needs(node: Optional[AST] = None, past: bool = True) -> Set[str]:
 
@@ -47,6 +59,7 @@ def all_node_needs(node: Optional[AST] = None, past: bool = True) -> Set[str]:
                 print(node.name, "PAST NEED", apply(all_node_needs, decorator_list + [args]))
                 return apply(all_node_needs, decorator_list + [args])
             else:
+                print('GOING IN')
                 global_need = TimeNodeCost(node.body, future_node_adds(node.args))
                 print(node.name, "GLOBAL NEED", global_need)
                 return global_need
@@ -55,7 +68,7 @@ def all_node_needs(node: Optional[AST] = None, past: bool = True) -> Set[str]:
             return TimeNodeCost([iter] + body + orelse, future_node_adds(target))
 
         case While(test, body, orelse) | If(test, body, orelse):
-            return TimeNodeCost(test + body + orelse, set())
+            return all_node_needs(test, past) | TimeNodeCost(body + orelse, set())
 
         case Break() | Continue():
             return set()
@@ -65,7 +78,7 @@ def all_node_needs(node: Optional[AST] = None, past: bool = True) -> Set[str]:
             return TimeNodeCost(body + handlers + orelse + finalbody, set())
 
         case ExceptHandler(type=t, name=name, body=body):
-            return all_node_needs(t) | TimeNodeCost(body, set(name))
+            return all_node_needs(t) | TimeNodeCost(body, (set(name) if name else set()))
 
         case With(items=items, body=body, type_comment=_):
             return apply(all_node_needs, items) | TimeNodeCost(body, apply(future_node_adds, items))
@@ -135,10 +148,10 @@ def all_node_needs(node: Optional[AST] = None, past: bool = True) -> Set[str]:
             return all_node_needs(body, past=past) - future_node_adds(args)
 
         case arg(arg_name):
-            return {arg_name}
+            return set() if hasattr(builtins, arg_name) else {arg_name}
 
         case Name(id=name_id):
-            return {name_id}
+            return set() if hasattr(builtins, name_id) else {name_id}
 
         case Raise(exc=exc, cause=cause):
             return apply(all_node_needs, [exc, cause], past=past)

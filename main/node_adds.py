@@ -1,30 +1,65 @@
 """
 Rémi Genet
 17/10/2023
+
+Patterns matching for Node adds
+Tried to be as exhaustive as possible, it may stay misses or mistakes
+apply function helps apply on any Iterable the base matching function
+
+Consider that AST is used in mode exec of course, so Module, Expression, Interactive and FunctionType are not present
 """
 import ast
-from itertools import chain
-from typing import Set, Optional, Callable, Iterable
 from ast import (
     ClassDef, FunctionDef, AsyncFunctionDef, Assign, AnnAssign, AugAssign,
-    NamedExpr, Call, keyword, IfExp, ListComp, SetComp, GeneratorExp, DictComp,
+    NamedExpr, keyword, IfExp, ListComp, SetComp, GeneratorExp, DictComp,
     comprehension, Expr, BinOp, BoolOp, Compare, Attribute, Subscript, Slice,
     arguments, arg, Name, AST, Delete, Import, ImportFrom, For, While, Try, With,
     Break, Return, Yield, Global, Nonlocal, If, Assert,
     Match, AsyncFor, AsyncWith, Await, ExceptHandler,
-    Lambda, Raise, Constant, Load, JoinedStr, YieldFrom,
+    Lambda, Raise, Constant, JoinedStr, YieldFrom,
     Starred, FormattedValue, withitem, Continue, alias, FunctionType, UnaryOp,
     TryStar, match_case, MatchOr, MatchAs, MatchStar, MatchValue, MatchMapping, MatchSingleton,
-    MatchSequence, MatchClass,
+    MatchSequence, MatchClass, Call
 )
+from itertools import chain
+from typing import Set, Optional, Callable, Iterable
 
 from interface import interface_import
 
-apply: Callable[[Callable[[Optional[AST], bool],Set[str]],Optional[Iterable[Optional[AST]]],bool],Set[str]] = interface_import("helpers", fromlist=('apply',), level=0)[0]
+apply: Callable[[Callable[[Optional[AST], bool], Set[str]], Optional[Iterable[Optional[AST]]], bool], Set[str]]
+apply, = interface_import("helpers", fromlist=('apply',), level=0)
 
 
 def future_node_adds(node: Optional[AST] = None, *args) -> Set[str]:
     match node:
+
+        case Constant(value=_):
+            # | ast.Pass:
+            return set()
+
+        case FormattedValue(value=_, conversion=_, format_spec=_):
+            return set()
+
+        case JoinedStr(values=_):
+            return set()
+
+        case ast.List(elts=_, ctx=_) | ast.Tuple(elts=_, ctx=_):
+            return set()
+
+        case ast.Set(elts=_):
+            return set()
+
+        case ast.Dict(keys=_, values=_):
+            return set()
+
+        case Name(id=id):
+            return {id}
+
+        case Starred(value=_, ctx=_):
+            return set()
+
+        case Expr(value=_):
+            return set()
 
         case FunctionType(argtypes=_, returns=_):
             return set()
@@ -54,8 +89,11 @@ def future_node_adds(node: Optional[AST] = None, *args) -> Set[str]:
         case arg(arg=a):
             return {a}
 
-        case Name(id=id):
-            return {id}
+        case Call(func=func, args=armts, keywords=keywords):
+            # Here --> Need to check if the function creates new variables inside it, as using global and nonlocal
+            # Or modifying mutable objects
+            # Or attributing herself new attributes
+            return set()
 
         case UnaryOp():
             return set()
@@ -65,7 +103,7 @@ def future_node_adds(node: Optional[AST] = None, *args) -> Set[str]:
 
         case Expr(_) | Attribute(_) | Subscript(_) | \
              keyword(_) | Return(_) | Yield(_) | \
-             YieldFrom(_) | Starred(_) | FormattedValue(_):
+             YieldFrom(_) | FormattedValue(_):
             return set()
 
         case IfExp(test=_, body=_, orelse=_):
@@ -101,14 +139,7 @@ def future_node_adds(node: Optional[AST] = None, *args) -> Set[str]:
         case Delete(_):
             return set()
 
-        case ast.List(_) | ast.Tuple(_) | ast.Set(_):
-            return set()
 
-        case ast.Dict(_, _):
-            return set()
-
-        case Constant() | Load() | ast.Pass:
-            return set()
 
         case For(target=target, body=body, orelse=orelse):
             return apply(future_node_adds, [target] + body + orelse)
