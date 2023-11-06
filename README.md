@@ -2,65 +2,69 @@
 
 ## Introduction
 
-This project is an exploration into the possibilities offered by manipulating Abstract Syntax Trees (ASTs) to improve Python code efficiency. The current focus is on enabling selective importing to minimize the overhead in Python applications by importing only what is absolutely necessary from large modules.
+This project, ASThetic, is a foray into refining Python code efficiency via Abstract Syntax Trees (ASTs). The goal is to provide tools that not only streamline imports by loading only essential components from large modules but also explore advanced code dissection and the potential for subsequent Cythonization. This could significantly reduce overhead and improve the performance of Python applications. Given that this project is in the developmental phase, the doors are open for collaboration to enhance its features.
 
-Please note, this project is in the early stages, and while the selective imports feature is operational, there is still a lot of ground to cover. Many cases remain unhandled, and contributions are welcomed.
+## Current Feature
 
-## Current Features
-
-- **Selective Imports**: The tool can analyze a codebase and identify which specific functions or components are being used, allowing it to potentially rewrite imports to be more efficient.
-- **AST Analysis Foundations**: The groundwork has been laid for more sophisticated code analysis by leveraging ASTs, enabling a more in-depth understanding of code semantics without execution.
+- **Selective Imports**: There's a tool in development that analyzes a codebase to detect which specific functions or components are being used. This facilitates the optimization of import statements for greater efficiency. This is still a work-in-progress, and the scope for improvement is vast, especially with the community’s support.
 
 ## Getting Started
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
+These instructions will guide you through setting up the project for development and testing.
 
 ### Prerequisites
 
-- Python 3.8 or newer
+- Python 3.8 or newer.
 
 ### Installation
 
-```
-git clone <repository-url>
-cd <repository-dir>
-pip install -r requirements.txt
+This project does not require any external packages beyond the Python standard library. To get started, clone the repository:
+
+```bash
+git clone https://github.com/remigenet/ASThetic/
+cd ASThetic
 ```
 
 ## Usage
 
-To analyze a Python file and optimize its import statements, you can use the script provided in the repository:
+To optimize import statements in a Python file, the following script can be used:
 
-```
-Use the function smart_import to selectively imports the only parts of the codes that defines it.
-It aims to reproduce fidely a python execution so variable in enclosing scopes even after the function will be taken with the module.
-The signature of the function is as follows:
-smart_import(module_path: str, importer_globals: Optional[dict] = None, importer_locals: Optional[dict] = None,
-                 targets: Set[str], return_ast: bool = False) \
-        -> Union[Tuple[str, ...], Tuple[Callable[..., Any], ...]]
-By defaults it will return an executable function, but parameter return_ast = True makes the AST module being return instead.
+```python
+from your_module import smart_import
+
+# Example usage of smart_import
+
+smart_import(module_path: str = 'C:/Users/remig/Desktop/pythonProject/test_files/a.py',
+                 importer_globals: Optional[dict] = None,
+                 importer_locals: Optional[dict] = None,
+                 targets: set = {'g', 'b'},
+                 return_ast: Optional[bool] = False) 
+        -> Union[Tuple[str, ...], Tuple[Callable[..., Any], ...]]:
+
+# 'result' will contain either a callable or an AST, depending on the 'return_ast' parameter
 ```
 
-This will generate an output detailing the optimized imports based on the current capabilities of the tool.
+Running this script will produce optimized import statements reflective of the tool's current functionality.
 
 ## Project Status
 
-- The selective imports feature is the first that has been partially implemented. It can currently handle a subset of common cases and patterns.
-- Advanced code optimizations, additional AST node type handling, and other features are planned for the future but are not yet implemented.
-- Error handling and edge cases in AST analysis are areas needing improvement.
+- **Selective Imports**: The selective import feature is currently able to handle a basic subset of patterns and is under active development for expansion and refinement.
+- Future enhancements to include better error handling, broader AST node type coverage, and further code optimization strategies are in the pipeline.
 
 ## Contributing
 
-Given the early-stage nature of the project, contributions, ideas, and discussions are highly encouraged. If you encounter an issue or have a suggestion, please open an issue. If you wish to contribute directly, feel free to make a pull request.
-
-For more detailed information, check out the `CONTRIBUTING.md` file (to be added soon).
+This project welcomes feedback and contributions. If an issue is encountered or an improvement is envisioned, opening an issue is encouraged. Contributions can also be made directly via pull requests. A `CONTRIBUTING.md` file will soon be provided with more guidelines on how to get involved.
 
 ## Roadmap
 
-- **Extensive Testing**: Adding more test cases, especially for edge cases in Python syntax and structure.
-- **Code Optimization**: Beyond selective imports, future updates will look at automatically suggesting code optimizations based on AST analysis.
-- **Documentation and Examples**: As features are added and existing ones are stabilized, detailed documentation and usage examples will be provided.
+- **Robust Selective Imports**: The completion of a fully functional selective import mechanism is the immediate priority.
+- **Testing**: The development of a comprehensive test suite to handle a wide range of Python syntax and structural cases is planned.
+- **Code Optimization**: Plans are in place to extend the project to include automatic suggestions for code optimizations based on AST analysis.
+- **Cythonization**: Looking ahead, the project aims to facilitate partial code pre-compilation in C with Cython to enhance efficiency.
+- **Documentation and Examples**: As features become stable and new ones are introduced, detailed documentation and examples will be made available.
 
 ## License
 
-This project is licensed under the GNU License - see the `LICENSE.md` file for details.
+This project is licensed under the GNU General Public License v3.0, as detailed in the `LICENSE.md` file. The preamble of the license articulates the freedom to share and change all versions of a program—to ensure it remains free software for all users.
+
+For any clarifications or questions, please feel free to initiate a discussion in the issues section.
